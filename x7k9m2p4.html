@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>Cache</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@700&family=Cairo:wght@400;700&family=Lateef:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--night:#1d0f1f;--plum:#3a1a3d;--rose:#ff5c8a;--rose-d:#c2185b;--blush:#ffc2d4;--gold:#ffd9a0;--ink:#fff4f7}
+*{box-sizing:border-box}
+html{min-height:100%}
+body{margin:0;min-height:100vh;min-height:100dvh;font-family:'Cairo',system-ui,sans-serif;color:var(--ink);
+  background:radial-gradient(ellipse 80% 50% at 50% 38%,rgba(255,92,138,.22),transparent 70%),linear-gradient(180deg,var(--night),var(--plum));
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:max(24px,env(safe-area-inset-top)) 20px max(24px,env(safe-area-inset-bottom));overflow-x:hidden;text-align:center;-webkit-tap-highlight-color:transparent}
+.stars{position:fixed;inset:0;pointer-events:none;z-index:0}
+.stars i{position:absolute;width:3px;height:3px;border-radius:50%;background:var(--gold);opacity:.5;animation:tw 3.5s ease-in-out infinite}
+@keyframes tw{50%{opacity:.08}}
+.stage{position:relative;z-index:1;width:100%;max-width:1000px}
+.hint{font-family:'Aref Ruqaa',serif;font-size:1.5rem;color:var(--blush);margin:0 0 6px;transition:opacity .4s}
+body.opened .hint,body.asking .hint{opacity:0;height:0;margin:0;overflow:hidden}
+.robot{all:unset;cursor:pointer;display:block;margin:0 auto;width:min(62vw,250px);aspect-ratio:120/134;position:relative;
+  animation:float 4.5s ease-in-out infinite;filter:drop-shadow(0 18px 40px rgba(255,92,138,.45))}
+.robot:focus-visible{outline:3px solid var(--gold);outline-offset:8px;border-radius:30px}
+.robot svg{width:100%;height:100%;overflow:visible;display:block}
+@keyframes float{50%{transform:translateY(-10px)}}
+.r-head{fill:var(--rose)}.r-ear,.r-body,.r-arm{fill:var(--rose-d)}.r-face{fill:#2a0f22}.r-eye,.r-ant{fill:#ffe9a6}
+.r-ant-stem{stroke:var(--rose-d);stroke-width:2.5;stroke-linecap:round;fill:none}
+.r-mouth{fill:none;stroke:#ffe9a6;stroke-width:2.5;stroke-linecap:round}
+.r-core{fill:#ffe9a6;transform-origin:60px 112px;animation:core 2.5s ease-in-out infinite}
+@keyframes core{50%{opacity:.5}}
+.love-eye,.cheek{opacity:0;transition:opacity .3s}.love-eye{fill:#ff5c8a}.cheek{fill:#ff8fb0}
+body.opened .r-eye{opacity:0}body.opened .love-eye{opacity:1}body.opened .cheek{opacity:.8}
+body.opened .r-mouth{d:path("M48 68q12 14 24 0")}
+body.opened .r-core{animation:beat .8s ease-in-out infinite}
+@keyframes beat{0%,100%{transform:scale(1)}30%{transform:scale(1.9)}55%{transform:scale(1.2)}}
+.robot.pop{animation:pop .5s}
+@keyframes pop{40%{transform:scale(1.1) rotate(-3deg)}}
+.reveal{margin-top:22px;max-height:0;opacity:0;overflow:hidden;transition:max-height 1.2s ease,opacity .8s ease}
+body.opened .reveal{max-height:9000px;opacity:1}
+body.opened .robot{width:min(38vw,140px);transition:width .8s ease}
+.names{font-family:'Aref Ruqaa',serif;font-size:clamp(2rem,9vw,2.8rem);line-height:1.3;margin:0}
+button.pill{font:inherit;font-weight:700;border:0;border-radius:999px;padding:12px 28px;cursor:pointer;color:#fff;background:var(--rose-d)}
+button.pill:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+button.pill[disabled]{opacity:.4;cursor:not-allowed}
+.again{margin-top:14px;color:var(--night)!important;background:linear-gradient(135deg,var(--gold),#ffb3c7)!important}
+.quiz{margin-top:22px}
+.qtext{font-family:'Aref Ruqaa',serif;font-size:clamp(1.5rem,6.5vw,1.9rem);line-height:1.6;min-height:3.2em;margin:0 0 12px;color:var(--ink)}
+.quiz .row{gap:12px}
+.tear{fill:#8fd3ff;opacity:0}
+body.sad .tear{opacity:1;animation:tear 1.4s ease-in infinite}
+@keyframes tear{from{transform:translateY(0)}to{transform:translateY(14px);opacity:0}}
+body.sad .r-mouth{d:path("M48 77q12 -12 24 0")}
+body.sad .r-head{fill:#8793b3}
+body.sad .r-ear,body.sad .r-body,body.sad .r-arm{fill:#566082}
+body.sad .r-eye{r:5.5}
+body.sad .cheek{opacity:0}
+body.sad .r-core{animation:none;opacity:.25;fill:#9fb0d8}
+body.sad .r-ant{fill:#7d8aa8;transform:translate(9px,9px)}
+body.sad .r-ant-stem{transform:rotate(28deg);transform-origin:60px 29px;stroke:#566082}
+body.sad .robot{animation:none;transform:translateY(8px)}
+.brow{fill:none;stroke:#ffe9a6;stroke-width:2.6;stroke-linecap:round;opacity:0;transition:opacity .4s}
+body.sad .brow{opacity:1}
+.gloom{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0;transition:opacity 1s ease;
+  background:radial-gradient(ellipse 80% 55% at 50% 40%,rgba(70,85,130,.55),transparent 70%),linear-gradient(180deg,#0d1018,#1d2233)}
+body.sad .gloom{opacity:1}
+body.sad .stars{opacity:.2}
+.rain{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;opacity:0;transition:opacity .8s}
+body.sad .rain{opacity:.75}
+.rain i{position:absolute;top:-30px;width:2px;height:18px;background:linear-gradient(transparent,#8fb4e8);animation:fall linear infinite;animation-play-state:paused}
+body.sad .rain i{animation-play-state:running}
+@keyframes fall{to{transform:translateY(115vh)}}
+.qsub{font-size:.95rem;color:#9fb0d8;margin:-4px 0 12px;min-height:1.4em}
+body.sad .qtext{color:#c9d3ec}
+@media (prefers-reduced-motion:reduce){.rain i,body.sad .tear{animation:none!important}}
+body.sad .robot{filter:drop-shadow(0 18px 40px rgba(120,140,200,.4))}
+.cards{margin:16px auto 0;max-width:360px}
+.card{background:rgba(255,255,255,.06);border:1px solid rgba(255,194,212,.2);border-radius:22px;padding:12px 16px 16px;transition:opacity .3s,transform .3s}
+.card.swap{opacity:0;transform:translateY(8px) scale(.98)}
+.sc{height:112px;display:flex;justify-content:center}
+.sc svg{width:140px;height:112px;overflow:visible}
+.cap{font-family:'Aref Ruqaa',serif;font-size:1.4rem;line-height:1.8;color:var(--blush);margin:6px 0 0;min-height:3.4em}
+.dots{display:flex;gap:6px;justify-content:center;margin-top:10px}
+.dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,194,212,.3);transition:.3s}
+.dots i.on{background:var(--rose);transform:scale(1.35)}
+.sc .pl,.sc .fl,.sc .bat,.sc .petal,.sc .ring,.sc .rise{transform-box:fill-box;transform-origin:center}
+.sc .pl{animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.22)}}
+.sc .sway{transform-origin:60px 92px;animation:sway 3.2s ease-in-out infinite}
+@keyframes sway{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+.sc .fl{animation:flt 2.4s ease-in infinite}
+@keyframes flt{0%{transform:translateY(10px) scale(.6);opacity:0}30%{opacity:1}100%{transform:translateY(-22px) scale(1);opacity:0}}
+.sc .bat{transform-origin:left center;animation:chg 3s ease-in-out infinite}
+@keyframes chg{0%{transform:scaleX(.08)}70%,100%{transform:scaleX(1)}}
+.sc .petal{animation:petal 3.2s ease-in infinite}
+@keyframes petal{0%{transform:translateY(0) rotate(0);opacity:0}15%{opacity:1}100%{transform:translateY(74px) rotate(130deg);opacity:0}}
+.sc .ring{animation:ring 1.8s ease-out infinite}
+@keyframes ring{from{transform:scale(.7);opacity:.9}to{transform:scale(1.6);opacity:0}}
+.sc .comet{stroke-dasharray:50 150;animation:comet 2.6s linear infinite}
+@keyframes comet{to{stroke-dashoffset:-200}}
+.sc .rise{animation:rise 3s ease-in-out infinite}
+@keyframes rise{0%,15%{transform:translateY(16px) scale(.5);opacity:0}55%{opacity:1}100%{transform:translateY(-24px) scale(1.1);opacity:0}}
+@media (prefers-reduced-motion:reduce){.sc *{animation:none!important}}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.draw{display:block;width:100%;max-width:380px;margin:0 auto;overflow:visible}
+.draw text{font-family:'Aref Ruqaa',serif;font-weight:700;fill:url(#ink)}
+#swoosh{fill:none;stroke:url(#ink);stroke-width:3;stroke-linecap:round}
+#hrt{fill:#ff5c8a;fill-opacity:0;stroke:#ff5c8a;stroke-width:1.2;stroke-linejoin:round}
+#pen{opacity:0;transition:opacity .5s}
+.ink.kid{stroke:#ffe3e3;stroke-width:2.2}
+.ink{fill:none;stroke:url(#ink);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+#bud{stroke:#ff5c8a}
+#stem,#lf1,#lf2{stroke:#7fd6a8}
+#inf{stroke:#ffd9a0}
+.fly{position:fixed;bottom:-30px;z-index:2;pointer-events:none;animation:up linear forwards;will-change:transform}
+@keyframes up{to{transform:translateY(-110vh) translateX(var(--dx)) rotate(var(--rot));opacity:0}}
+
+.sc .bounce{animation:bounce 1.6s ease-in-out infinite}
+@keyframes bounce{50%{transform:translateY(-6px)}}
+.sc .blink{animation:blink 3s ease-in-out infinite}
+@keyframes blink{0%,90%,100%{opacity:1}95%{opacity:.1}}
+.sc .glow{animation:glow 2.4s ease-in-out infinite}
+@keyframes glow{50%{filter:drop-shadow(0 0 6px #ff5c8a)}}
+.sc .pop{transform-box:fill-box;transform-origin:center;animation:pop2 1.8s ease-in-out infinite}
+@keyframes pop2{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+.sc .draw2{stroke-dasharray:200;stroke-dashoffset:200;animation:draw2 2.6s ease-in-out infinite}
+@keyframes draw2{45%,100%{stroke-dashoffset:0}}
+
+.duo{display:flex;flex-direction:column;gap:18px;margin-top:18px;align-items:stretch;justify-content:center}
+@media (min-width:760px){
+  .duo{flex-direction:row;align-items:flex-start;gap:22px}
+  .duo .side-cards{flex:1 1 50%}
+  .duo .side-msg{flex:1 1 50%}
+}
+.side-cards,.side-msg{min-width:0}
+
+/* ===== شاشة القفل ===== */
+#lock{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse 80% 50% at 50% 40%,rgba(255,92,138,.2),transparent 70%),linear-gradient(180deg,#0d0710,#1d0f1f);
+  padding:20px;text-align:center;transition:opacity .6s ease,visibility .6s ease}
+#lock.hidden{opacity:0;visibility:hidden;pointer-events:none}
+.lockBox{background:rgba(255,255,255,.06);border:1px solid rgba(255,194,212,.3);border-radius:26px;
+  padding:30px 24px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.5);backdrop-filter:blur(8px)}
+.lockIcon{font-size:3.4rem;margin-bottom:8px;animation:lockPulse 2s ease-in-out infinite}
+@keyframes lockPulse{50%{transform:scale(1.12) rotate(-6deg)}}
+.lockBox h2{font-family:'Aref Ruqaa',serif;font-size:1.5rem;margin:0 0 6px;color:var(--gold)}
+.lockBox p{margin:0 0 18px;color:var(--blush);line-height:1.7;font-size:.95rem}
+#pass{width:100%;padding:14px;border-radius:14px;border:2px solid rgba(255,194,212,.35);
+  background:rgba(0,0,0,.35);color:#fff;font-size:1.6rem;text-align:center;letter-spacing:10px;direction:ltr;
+  font-family:'Cairo',sans-serif;outline:none;transition:border-color .3s,box-shadow .3s;font-weight:700}
+#pass::placeholder{letter-spacing:6px;color:rgba(255,194,212,.35)}
+#pass:focus{border-color:var(--rose);box-shadow:0 0 0 4px rgba(255,92,138,.2)}
+#pass.err{border-color:#e11d48;animation:shake .45s}
+@keyframes shake{20%{transform:translateX(-7px)}60%{transform:translateX(7px)}}
+.lockMsg{min-height:1.4em;color:#ff8fb0;font-size:.9rem;margin:10px 0 0}
+.lockBtn{margin-top:16px;width:100%}
+
+/* ===== صندوق الرسالة اليدوية (كبير + يفتح بالضغط) ===== */
+.msgWrap{margin-top:8px}
+.msgCard{position:relative;background:linear-gradient(160deg,#fff7e6,#ffe6cc);
+  border-radius:20px;padding:26px 24px 40px;box-shadow:0 18px 50px rgba(0,0,0,.4);
+  text-align:right;cursor:pointer;transition:transform .4s ease,box-shadow .4s ease;overflow:hidden;min-height:230px}
+.msgCard:hover{transform:translateY(-3px);box-shadow:0 22px 60px rgba(255,92,138,.35)}
+.msgCard::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    repeating-linear-gradient(180deg,transparent 0 31px,rgba(196,138,72,.18) 31px 32px),
+    linear-gradient(90deg,rgba(196,138,72,.25) 0 1px,transparent 1px);
+  background-position:0 12px,30px 0;
+  opacity:.85;border-radius:inherit}
+.msgCard::after{content:"";position:absolute;top:0;bottom:0;right:28px;width:2px;background:rgba(255,92,138,.35);z-index:1}
+
+.msgCover{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:180px;text-align:center;transition:opacity .5s ease,transform .5s ease}
+.msgCard.open .msgCover{opacity:0;transform:scale(.9);pointer-events:none;position:absolute;inset:0}
+.msgCover .envIcon{font-size:3.4rem;margin-bottom:10px;animation:envFloat 2.2s ease-in-out infinite}
+@keyframes envFloat{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-8px) rotate(3deg)}}
+.msgCover .envText1{font-family:'Aref Ruqaa',serif;font-size:1.35rem;color:#c2185b;margin:0 0 4px}
+.msgCover .envText2{font-family:'Cairo',sans-serif;font-size:.9rem;color:#7a0f3a;opacity:.8;margin:0}
+
+.msgBody{position:relative;z-index:2;max-height:0;overflow:hidden;opacity:0;
+  transition:max-height 1.2s ease,opacity .8s ease,padding .6s ease;padding:0}
+.msgCard.open .msgBody{max-height:900px;opacity:1;padding:8px 0 0}
+.msgTitle{font-family:'Aref Ruqaa',serif;font-size:1.1rem;color:#c2185b;margin:0 0 12px;position:relative}
+.msgText{font-family:'Lateef',serif;font-weight:600;font-size:1.5rem;line-height:2.05;color:#3a1a3d;
+  position:relative;white-space:pre-line}
+.msgSign{display:block;font-family:'Lateef',serif;font-weight:600;font-size:1.85rem;color:#7a0f3a;
+  margin-top:16px;transform:rotate(-3deg);letter-spacing:1px}
+.msgStamp{position:absolute;left:18px;bottom:16px;width:76px;height:76px;border:2px dashed #c2185b;
+  border-radius:50%;display:flex;align-items:center;justify-content:center;color:#c2185b;
+  font-family:'Aref Ruqaa',serif;font-size:.78rem;transform:rotate(-12deg);opacity:.85;text-align:center;line-height:1.2;
+  background:rgba(255,255,255,.4);z-index:3}
+.msgStamp::after{content:"❤";position:absolute;font-size:1rem;color:#c2185b;top:-8px;right:-2px}
+</style>
+</head>
+<body>
+
+<!-- ===== شاشة القفل ===== -->
+<div id="lock">
+    <div class="lockBox">
+        <div class="lockIcon">🐥</div>
+        <h2>خاص بالكتكوتة 💗</h2>
+        <p>أدخلي كلمة المرور يا كتكوتة</p>
+        <input id="pass" type="password" inputmode="numeric" maxlength="10" placeholder="••••" autocomplete="off">
+        <button id="unlockBtn" class="pill lockBtn" type="button">افتحي يا كتكوتة ❤</button>
+        <p id="lockMsg" class="lockMsg"></p>
+    </div>
+</div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="hs" viewBox="0 0 24 24"><path d="M12 21s-7-4.5-9.5-9C.8 8.6 2.5 5 6 5c2.2 0 3.6 1.2 6 3.5C14.4 6.2 15.8 5 18 5c3.5 0 5.2 3.6 3.5 7-2.5 4.5-9.5 9-9.5 9z"/></symbol></svg>
+<div class="stars" aria-hidden="true"></div>
+<div class="gloom" aria-hidden="true"></div>
+<div class="rain" id="rain" aria-hidden="true"></div>
+
+<main class="stage">
+    <p class="hint" id="hint"></p>
+    <button class="robot" id="robot" type="button" aria-label="اضغطي لتظهر لك رسالة">
+        <svg viewBox="0 0 120 134" aria-hidden="true">
+            <path class="r-ant-stem" d="M60 29V16"/><circle class="r-ant" cx="60" cy="11" r="5.5"/>
+            <rect class="r-ear" x="9" y="49" width="10" height="24" rx="5"/><rect class="r-ear" x="101" y="49" width="10" height="24" rx="5"/>
+            <rect class="r-head" x="19" y="29" width="82" height="64" rx="22"/><rect class="r-face" x="29" y="40" width="62" height="40" rx="15"/>
+            <circle class="r-eye" cx="47" cy="58" r="7"/><circle class="r-eye" cx="73" cy="58" r="7"/>
+            <path class="love-eye" transform="translate(37.6 49.6) scale(.78)" d="M12 21s-7-4.5-9.5-9C.8 8.6 2.5 5 6 5c2.2 0 3.6 1.2 6 3.5C14.4 6.2 15.8 5 18 5c3.5 0 5.2 3.6 3.5 7-2.5 4.5-9.5 9-9.5 9z"/>
+            <path class="love-eye" transform="translate(63.6 49.6) scale(.78)" d="M12 21s-7-4.5-9.5-9C.8 8.6 2.5 5 6 5c2.2 0 3.6 1.2 6 3.5C14.4 6.2 15.8 5 18 5c3.5 0 5.2 3.6 3.5 7-2.5 4.5-9.5 9-9.5 9z"/>
+            <circle class="cheek" cx="36" cy="70" r="4.5"/><circle class="cheek" cx="84" cy="70" r="4.5"/>
+            <path class="tear" d="M81 66q-4.5 6.5 0 9.5q4.5 -3 0 -9.5z"/>
+            <path class="tear" style="animation-delay:.7s" d="M39 66q-4.5 6.5 0 9.5q4.5 -3 0 -9.5z"/>
+            <path class="brow" d="M37 51L57 44"/><path class="brow" d="M83 51L63 44"/>
+            <path class="r-mouth" d="M51 70q9 7 18 0"/>
+            <rect class="r-body" x="33" y="97" width="54" height="31" rx="13"/><circle class="r-core" cx="60" cy="112" r="5.5"/>
+            <rect class="r-arm" x="25" y="100" width="9" height="22" rx="4.5"/><rect class="r-arm" x="86" y="100" width="9" height="22" rx="4.5"/>
+        </svg>
+    </button>
+
+    <section class="quiz" id="quiz" hidden aria-live="polite">
+        <p class="qtext" id="qText"></p>
+        <p class="qsub" id="qSub"></p>
+        <div class="row">
+            <button class="pill" id="qYes" type="button"></button>
+            <button class="pill alt" id="qNo" type="button"></button>
+            <button class="pill again" id="qRetry" type="button" hidden style="margin-top:0">مزحت، بحبك</button>
+        </div>
+    </section>
+
+    <section class="reveal" aria-live="polite">
+        <h1 class="sr" id="names"></h1>
+        <svg class="draw" id="draw" viewBox="0 -100 360 460" aria-hidden="true">
+            <defs>
+                <linearGradient id="ink" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffd9a0"/><stop offset=".5" stop-color="#ff8fb0"/><stop offset="1" stop-color="#ffd9a0"/></linearGradient>
+                <clipPath id="wipe"><rect id="wipeRect" x="360" y="0" width="0" height="460"/></clipPath>
+                <clipPath id="wipe2"><rect id="wipeRect2" x="360" y="0" width="0" height="460"/></clipPath>
+            </defs>
+            <path class="ink" id="moon" data-fill="#ffd9a0" d="M312 -80a24 24 0 1 0 12 42a19 19 0 1 1 -12 -42z"/>
+            <path class="ink" id="st1" data-fill="#ffe9a6"/>
+            <path class="ink" id="st2" data-fill="#ffe9a6"/>
+            <path class="ink" id="st3" data-fill="#ffe9a6"/>
+            <path class="ink kid" id="mHead" data-tx="4" transform="translate(4 0)" d="M140 -36a15 15 0 1 0 30 0a15 15 0 1 0 -30 0"/>
+            <path class="ink kid" id="mHair" data-tx="4" data-fill="#ffd9a0" transform="translate(4 0)" d="M141 -42c1 -11 9 -16 15 -16c8 0 14 5 14 14c-6 -4 -12 -5 -18 -3c-5 1 -9 3 -11 5z"/>
+            <path class="ink kid" id="mFace" data-tx="4" transform="translate(4 0)" d="M148 -37q2.5 2.5 5 0M158 -37q2.5 2.5 5 0M151 -29q4 3 8 0"/>
+            <path class="ink kid" id="mSuit" data-tx="4" data-fill="#34457a" transform="translate(4 0)" d="M137 -14c0 -3 2 -4 5 -4h26c3 0 5 1 5 4v28h-36z"/>
+            <path class="ink kid" id="mTie" data-tx="4" data-fill="#ff5c8a" transform="translate(4 0)" d="M155 -17l-3.5 4l3.5 2l3.5 -2zM155 -11l-3 3l3 18l3 -18z"/>
+            <path class="ink kid" id="mLegs" data-tx="4" transform="translate(4 0)" d="M145 14v26M165 14v26"/>
+            <path class="ink kid" id="wHead" data-tx="-6" transform="translate(-6 0)" d="M190 -36a15 15 0 1 0 30 0a15 15 0 1 0 -30 0"/>
+            <path class="ink kid" id="wHair" data-tx="-6" data-fill="#ff8fb0" transform="translate(-6 0)" d="M190 -38c2 -13 9 -19 15 -19c8 0 14 6 15 19c-7 -7 -22 -7 -30 0zM190 -38c-3 14 -2 26 2 34M220 -38c3 14 2 26 -2 34"/>
+            <path class="ink kid" id="wFace" data-tx="-6" transform="translate(-6 0)" d="M198 -37q2.5 2.5 5 0M208 -37q2.5 2.5 5 0M201 -29q4 3 8 0"/>
+            <path class="ink kid" id="wDress" data-tx="-6" data-fill="#ffd0e0" transform="translate(-6 0)" d="M196 -16c0 -2 2 -3 4 -3h10c2 0 4 1 4 3l-1 14c10 8 20 20 22 42h-60c2 -22 12 -34 22 -42z"/>
+            <path class="ink kid" id="armM" d="M176 -12C190 2 204 2 211 -8"/>
+            <path class="ink kid" id="armW" d="M194 -12C182 6 162 8 146 -4"/>
+            <path class="ink" id="kHrt" data-fill="#ff5c8a" data-tx="169.2" data-ty="-76.7" data-s="0.9" transform="translate(169.2 -76.7) scale(.9)" d="M12 21s-7-4.5-9.5-9C.8 8.6 2.5 5 6 5c2.2 0 3.6 1.2 6 3.5C14.4 6.2 15.8 5 18 5c3.5 0 5.2 3.6 3.5 7-2.5 4.5-9.5 9-9.5 9z"/>
+            <g clip-path="url(#wipe)">
+                <text id="tHer" x="256" y="134" text-anchor="middle" font-size="52"></text>
+                <text id="tMe" x="104" y="134" text-anchor="middle" font-size="52"></text>
+            </g>
+            <path class="ink" id="swoosh" d="M314 158C264 192 214 186 180 166C146 186 96 192 46 158"/>
+            <path class="ink" id="hrt" data-fill="#ff5c8a" data-tx="157.2" data-ty="87.3" data-s="1.9" transform="translate(157.2 87.3) scale(1.9)" d="M12 21s-7-4.5-9.5-9C.8 8.6 2.5 5 6 5c2.2 0 3.6 1.2 6 3.5C14.4 6.2 15.8 5 18 5c3.5 0 5.2 3.6 3.5 7-2.5 4.5-9.5 9-9.5 9z"/>
+            <path class="ink" id="bud" data-fill="#ff5c8a" d="M180 214c-13 -1 -17 -16 -5 -23c10 -5 25 1 22 13c-3 11 -15 12 -19 4c-3 -7 4 -12 10 -8"/>
+            <path class="ink" id="stem" d="M181 216C184 234 177 248 181 272"/>
+            <path class="ink" id="lf1" data-fill="#4fae82" d="M180 244C168 243 160 235 158 229C170 228 179 234 180 244Z"/>
+            <path class="ink" id="lf2" data-fill="#4fae82" d="M181 254C193 253 201 245 203 239C191 238 182 244 181 254Z"/>
+            <g clip-path="url(#wipe2)">
+                <text id="tLove" x="180" y="318" text-anchor="middle" font-size="40">حبّي الأبدي</text>
+            </g>
+            <path class="ink" id="inf" d="M180 346c-10 -12 -30 -12 -30 0s20 12 30 0s30 -12 30 0s-20 12 -30 0"/>
+            <g id="pen"><g><path d="M0 0L-3.5 -10L3.5 -10Z" fill="#ffe9a6"/><path d="M-3.5 -10L-6 -46L6 -46L3.5 -10Z" fill="#ffd9a0"/><rect x="-6" y="-52" width="12" height="7" rx="3" fill="#ff5c8a"/></g></g>
+        </svg>
+
+        <div class="duo">
+            <div class="side-cards">
+                <div class="cards"><div class="card" id="card"><div class="sc" id="sc"></div><p class="cap" id="cap"></p></div><div class="dots" id="dots"></div></div>
+                <button class="pill again" id="again" type="button">رسالة ثانية</button>
+            </div>
+
+            <div class="side-msg">
+                <div class="msgWrap">
+                    <div class="msgCard" id="msgCard">
+                        <div class="msgCover">
+                            <div class="envIcon">💌</div>
+                            <p class="envText1">رسالة مكتوبة بإيدي…</p>
+                            <p class="envText2">اضغطي لتفتحيها يا كتكوتة</p>
+                        </div>
+                        <div class="msgBody">
+                            <p class="msgTitle">💗 رسالة مكتوبة بإيدي…</p>
+                            <div class="msgText">يا كتكوتة…
+
+كل صباح بتذكر إن أحلى شي
+صار بحياتي هو إني لقيتك.
+إنتِ مش بس حبيبتي…
+إنتِ السكينة يلي بدور عليها قلبي.
+
+وعد مني:
+بضل أسمعك، وأفهمك،
+وأكون أول واحد يهوّن عليك.
+ولو الدنيا كلها ضاقت،
+أنا موجود… وبحبك.
+
+                            <span class="msgSign">— حبيبك: أحمد ❤</span>
+                            </div>
+                            <div class="msgStamp">معتمد<br>من<br>القلب</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script>
+(function () {
+    var HER = 'بيان', ME = 'أحمد';
+    var PASS = '2050';
+
+    var $ = function (id) { return document.getElementById(id); };
+
+    /* ===== شاشة القفل ===== */
+    var lockEl = $('lock'), passInput = $('pass'), lockMsg = $('lockMsg');
+    document.body.style.overflow = 'hidden';
+
+    function unlock() {
+        if (passInput.value.trim() === PASS) {
+            lockEl.classList.add('hidden');
+            document.body.style.overflow = '';
+            setTimeout(function () { lockEl.style.display = 'none'; }, 700);
+            try {
+                var Ctx = window.AudioContext || window.webkitAudioContext;
+                var ac = new Ctx();
+                [659, 988, 1319].forEach(function (f, k) {
+                    var o = ac.createOscillator(), g = ac.createGain();
+                    o.type = 'triangle'; o.frequency.value = f;
+                    g.gain.setValueAtTime(0.0001, ac.currentTime + k*0.12);
+                    g.gain.exponentialRampToValueAtTime(0.18, ac.currentTime + k*0.12 + 0.02);
+                    g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + k*0.12 + 0.35);
+                    o.connect(g); g.connect(ac.destination);
+                    o.start(ac.currentTime + k*0.12); o.stop(ac.currentTime + k*0.12 + 0.4);
+                });
+            } catch (e) {}
+        } else {
+            passInput.classList.add('err');
+            lockMsg.textContent = 'كلمة المرور غلط… جربي مرة ثانية يا كتكوتة';
+            passInput.value = '';
+            setTimeout(function () { passInput.classList.remove('err'); }, 500);
+        }
+    }
+    $('unlockBtn').addEventListener('click', unlock);
+    passInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') unlock(); });
+
+    $('hint').textContent = 'اضغطي على الروبوت يا كتكوتة';
+    $('names').textContent = HER + ' ♥ ' + ME;
+    $('tHer').textContent = HER; $('tMe').textContent = ME;
+
+    function H(x, y, w, c, cl, st) { return '<use href="#hs" x="' + x + '" y="' + y + '" width="' + w + '" height="' + w + '" fill="' + c + '" class="' + (cl || '') + '"' + (st ? ' style="' + st + '"' : '') + '/>'; }
+
+    var CARDS = [
+        ['<svg viewBox="0 0 120 100">'
+          + '<ellipse cx="60" cy="93" rx="46" ry="4" fill="rgba(255,92,138,.18)"/>'
+          + '<g class="sway">'
+            + '<circle cx="40" cy="40" r="10" fill="#ffe3d1"/>'
+            + '<path d="M30 40c0-10 5-14 10-14s10 4 10 14c-6-5-14-5-20 0z" fill="#ff8fb0"/>'
+            + '<path d="M30 40c-3 9-1 18 2 24M50 40c3 9 1 18-2 24" stroke="#ff8fb0" stroke-width="2" fill="none" stroke-linecap="round"/>'
+            + '<path d="M32 52h16l4 10 4 28H24l4-28z" fill="#ffd0e0"/>'
+            + '<circle cx="37" cy="40" r="1.3" fill="#2a0f22"/><circle cx="43" cy="40" r="1.3" fill="#2a0f22"/>'
+            + '<path d="M37 45q3 2 6 0" stroke="#c2185b" stroke-width="1.2" fill="none" stroke-linecap="round"/>'
+            + '<circle cx="33" cy="44" r="1.5" fill="#ff8fb0" opacity=".85"/><circle cx="47" cy="44" r="1.5" fill="#ff8fb0" opacity=".85"/>'
+          + '</g>'
+          + '<g class="bounce">'
+            + '<line x1="82" y1="34" x2="82" y2="27" stroke="#c2185b" stroke-width="2" stroke-linecap="round"/>'
+            + '<circle cx="82" cy="25" r="3" fill="#ffe9a6" class="pl"/>'
+            + '<rect x="70" y="34" width="24" height="20" rx="7" fill="#ff5c8a"/>'
+            + '<rect x="74" y="39" width="16" height="11" rx="4" fill="#2a0f22"/>'
+            + '<circle cx="79" cy="44" r="1.8" fill="#ffe9a6"/><circle cx="85" cy="44" r="1.8" fill="#ffe9a6"/>'
+            + '<path d="M79 48q3 2 6 0" stroke="#ffe9a6" stroke-width="1.2" fill="none" stroke-linecap="round"/>'
+            + '<rect x="74" y="56" width="16" height="24" rx="6" fill="#c2185b"/>'
+            + '<circle cx="82" cy="68" r="2.5" fill="#ffe9a6" class="pl"/>'
+            + '<rect x="67" y="58" width="5" height="16" rx="2.5" fill="#c2185b"/>'
+            + '<rect x="92" y="58" width="5" height="16" rx="2.5" fill="#c2185b"/>'
+          + '</g>'
+          + H(54,24,10,'#ff5c8a','fl')
+          + H(58,16,7,'#ff8fb0','fl','animation-delay:1.3s')
+          + H(50,14,6,'#ffc2d4','fl','animation-delay:2.2s')
+          + '</svg>',
+         'أنا ' + ME + '، وهاد الروبوت بيشهد إن قلبي إلك يا ' + HER + '.'],
+
+        ['<svg viewBox="0 0 120 100">'
+          + '<path d="M96 10a14 14 0 1 0 8 24a11 11 0 1 1 -8 -24z" fill="#ffd9a0" class="glow"/>'
+          + '<circle cx="18" cy="18" r="1.5" fill="#ffe9a6" class="blink"/>'
+          + '<circle cx="44" cy="10" r="1.1" fill="#ffe9a6" class="blink" style="animation-delay:.7s"/>'
+          + '<circle cx="66" cy="22" r="1.2" fill="#ffe9a6" class="blink" style="animation-delay:1.4s"/>'
+          + '<circle cx="14" cy="34" r="1" fill="#ffe9a6" class="blink" style="animation-delay:2s"/>'
+          + '<path d="M0 88q60-10 120 0v12H0z" fill="rgba(255,92,138,.15)"/>'
+          + '<g class="sway">'
+            + '<circle cx="50" cy="60" r="7" fill="#ffe3d1"/>'
+            + '<path d="M43 60c0-7 4-10 7-10s7 3 7 10c-4-3-10-3-14 0z" fill="#ff8fb0"/>'
+            + '<circle cx="47.5" cy="59" r="1" fill="#2a0f22"/><circle cx="52.5" cy="59" r="1" fill="#2a0f22"/>'
+            + '<path d="M48.5 63q2 1.5 4 0" stroke="#c2185b" stroke-width="1" fill="none" stroke-linecap="round"/>'
+            + '<path d="M43 67h14l3 7 2 14h-24l2-14z" fill="#ffd0e0"/>'
+            + '<circle cx="70" cy="60" r="7" fill="#ffe3d1"/>'
+            + '<path d="M63 58c1-6 5-8 7-8s6 2 7 8c-4-3-10-3-14 0z" fill="#3a1a3d"/>'
+            + '<circle cx="67.5" cy="59" r="1" fill="#2a0f22"/><circle cx="72.5" cy="59" r="1" fill="#2a0f22"/>'
+            + '<path d="M68.5 63q2 1.5 4 0" stroke="#3a1a3d" stroke-width="1" fill="none" stroke-linecap="round"/>'
+            + '<rect x="63" y="67" width="14" height="21" rx="3" fill="#34457a"/>'
+            + '<path d="M70 67l-2 5l2 2l2-2z" fill="#ff5c8a"/>'
+            + '<path d="M58 74q6 4 10 0" stroke="#ffe3d1" stroke-width="2.6" fill="none" stroke-linecap="round"/>'
+          + '</g>'
+          + H(55,30,9,'#ff5c8a','fl')
+          + '</svg>',
+         'معك يا ' + HER + '، كل يوم بيصير أحلى من اللي قبله.'],
+
+        ['<svg viewBox="0 0 120 100">'
+          + '<rect x="10" y="30" width="70" height="46" rx="10" fill="none" stroke="#ffd9a0" stroke-width="3"/>'
+          + '<rect x="80" y="45" width="7" height="16" rx="3" fill="#ffd9a0"/>'
+          + '<rect class="bat" x="16" y="36" width="58" height="34" rx="6" fill="url(#ink)"/>'
+          + H(35,42,22,'#fff','pl','transform-origin:46px 53px')
+          + '<text x="45" y="92" text-anchor="middle" font-size="12" fill="#ffd9a0" font-family="Cairo" font-weight="700">100%</text>'
+          + '<path class="fl" d="M96 40l-5 10h4l-4 10" stroke="#ffe9a6" stroke-width="2" fill="none" stroke-linecap="round"/>'
+          + H(100,62,11,'#ff5c8a','pl')
+          + '</svg>',
+         'إنتِ يا ' + HER + ' الشحن اللي بيشغّلني… مية بالمية.'],
+
+        ['<svg viewBox="0 0 120 100">'
+          + '<path d="M60 48C63 64 57 78 60 96" stroke="#4fae82" stroke-width="3" fill="none" stroke-linecap="round"/>'
+          + '<path d="M60 78c-10 0-17-6-18-13c10-1 17 5 18 13z" fill="#4fae82"/>'
+          + '<path d="M61 70c10-1 17-7 18-14c-10 0-17 5-18 14z" fill="#4fae82"/>'
+          + '<circle cx="60" cy="34" r="15" fill="#ff5c8a" class="pop"/>'
+          + '<path d="M60 34c-5-4-10 0-7 6c3 5 12 2 12-5c0-8-11-11-16-4" stroke="#c2185b" stroke-width="2.3" fill="none" stroke-linecap="round"/>'
+          + '<ellipse class="petal" cx="88" cy="16" rx="5" ry="8" fill="#ff8fb0"/>'
+          + '<ellipse class="petal" cx="32" cy="12" rx="5" ry="8" fill="#ff8fb0" style="animation-delay:1.1s"/>'
+          + '<ellipse class="petal" cx="74" cy="6" rx="4" ry="7" fill="#ffc2d4" style="animation-delay:2s"/>'
+          + '<ellipse class="petal" cx="46" cy="2" rx="4" ry="7" fill="#ffc2d4" style="animation-delay:2.8s"/>'
+          + '</svg>',
+         'اسمك يا ' + HER + ' أحلى شي كتبته بحياتي.'],
+
+        ['<svg viewBox="0 0 120 100">'
+          + '<g class="glow">' + H(24,26,36,'#ff5c8a','pl') + '</g>'
+          + '<g class="glow" style="animation-delay:.8s">' + H(60,26,36,'#ff8fb0','pl') + '</g>'
+          + H(52,60,16,'#ffe9a6','pl')
+          + '<path class="draw2" d="M40 84h40" stroke="#ffd9a0" stroke-width="2" fill="none" stroke-linecap="round"/>'
+          + '</svg>',
+         'لو القلب عنده زر تشغيل… إنتِ اللي ضغطتيه.'],
+
+        ['<svg viewBox="0 0 120 100">'
+          + '<path d="M60 50c-10-18-36-18-36 0s26 18 36 0s36-18 36 0s-26 18-36 0" fill="none" stroke="rgba(255,194,212,.25)" stroke-width="5" stroke-linecap="round"/>'
+          + '<path class="comet" pathLength="200" d="M60 50c-10-18-36-18-36 0s26 18 36 0s36-18 36 0s-26 18-36 0" fill="none" stroke="#ff5c8a" stroke-width="5" stroke-linecap="round"/>'
+          + H(52,80,16,'#ff8fb0','pl')
+          + H(24,10,8,'#ffc2d4','fl')
+          + H(90,12,7,'#ffc2d4','fl','animation-delay:1.4s')
+          + '</svg>',
+         'بحبك يا ' + HER + ' أكتر من أمس، وأقل من بكرا.'],
+
+        ['<svg viewBox="0 0 120 100">'
+          + H(52,2,16,'#ff5c8a','fl')
+          + H(38,0,10,'#ff8fb0','fl','animation-delay:1.1s')
+          + H(74,0,9,'#ffc2d4','fl','animation-delay:1.8s')
+          + '<rect x="20" y="34" width="80" height="52" rx="7" fill="#ffd0e0"/>'
+          + '<path d="M20 40l40 26l40-26" fill="none" stroke="#ff8fb0" stroke-width="3" stroke-linejoin="round"/>'
+          + '<path d="M20 86l28-22M100 86l-28-22" stroke="#ff8fb0" stroke-width="2.5" fill="none"/>'
+          + H(55,54,10,'#ff5c8a','pl')
+          + '</svg>',
+         'روبوتك الصغير يا ' + HER + ' ما بيعرف يحب غيرك.'],
+
+        ['<svg viewBox="0 0 120 100">'
+          + '<ellipse cx="60" cy="93" rx="46" ry="4" fill="rgba(255,92,138,.18)"/>'
+          + '<g class="bounce">'
+            + '<line x1="34" y1="32" x2="34" y2="24" stroke="#c2185b" stroke-width="2" stroke-linecap="round"/>'
+            + '<circle cx="34" cy="21" r="3" fill="#ffe9a6" class="pl"/>'
+            + '<rect x="22" y="32" width="24" height="20" rx="7" fill="#ff5c8a"/>'
+            + '<rect x="26" y="37" width="16" height="11" rx="4" fill="#2a0f22"/>'
+            + '<circle cx="31" cy="42" r="1.8" fill="#ffe9a6"/><circle cx="37" cy="42" r="1.8" fill="#ffe9a6"/>'
+            + '<path d="M31 46q3 2 6 0" stroke="#ffe9a6" stroke-width="1.2" fill="none" stroke-linecap="round"/>'
+            + '<rect x="26" y="54" width="16" height="24" rx="6" fill="#c2185b"/>'
+            + '<circle cx="34" cy="66" r="2.5" fill="#ffe9a6" class="pl"/>'
+            + '<rect x="19" y="56" width="5" height="16" rx="2.5" fill="#c2185b"/>'
+            + '<rect x="44" y="56" width="5" height="16" rx="2.5" fill="#c2185b" transform="rotate(-40 46 60)"/>'
+          + '</g>'
+          + '<g class="sway">'
+            + '<circle cx="82" cy="42" r="10" fill="#ffe3d1"/>'
+            + '<path d="M72 42c0-10 5-14 10-14s10 4 10 14c-6-5-14-5-20 0z" fill="#ff8fb0"/>'
+            + '<path d="M72 42c-3 9-1 18 2 24M92 42c3 9 1 18-2 24" stroke="#ff8fb0" stroke-width="2" fill="none" stroke-linecap="round"/>'
+            + '<path d="M74 54h16l4 10 4 26H70l4-26z" fill="#ffd0e0"/>'
+            + '<circle cx="79" cy="42" r="1.3" fill="#2a0f22"/><circle cx="85" cy="42" r="1.3" fill="#2a0f22"/>'
+            + '<path d="M79 47q3 2 6 0" stroke="#c2185b" stroke-width="1.2" fill="none" stroke-linecap="round"/>'
+            + '<circle cx="75" cy="46" r="1.5" fill="#ff8fb0" opacity=".85"/><circle cx="89" cy="46" r="1.5" fill="#ff8fb0" opacity=".85"/>'
+          + '</g>'
+          + '<circle class="ring" cx="60" cy="64" r="9" fill="none" stroke="#ffd9a0" stroke-width="2.5"/>'
+          + '<circle cx="60" cy="64" r="3" fill="#ffe9a6" class="pl"/>'
+          + H(46,18,9,'#ff5c8a','fl')
+          + H(70,14,7,'#ff8fb0','fl','animation-delay:1.2s')
+          + '</svg>',
+         'يا ' + HER + '… بتقبلي أكون روبوتك للأبد؟ بحبك.']
+    ];
+
+    var st = document.querySelector('.stars');
+    for (var s = 0; s < 40; s++) {
+        var d = document.createElement('i');
+        d.style.cssText = 'top:' + Math.random()*100 + '%;left:' + Math.random()*100 + '%;animation-delay:' + (Math.random()*3.5) + 's';
+        st.appendChild(d);
+    }
+    var rain = $('rain');
+    for (var r = 0; r < 55; r++) {
+        var dr = document.createElement('i');
+        dr.style.cssText = 'left:' + Math.random()*100 + '%;animation-duration:' + (0.9 + Math.random()*0.9) + 's;animation-delay:-' + (Math.random()*2) + 's;opacity:' + (0.4 + Math.random()*0.6);
+        rain.appendChild(dr);
+    }
+
+    var ctx;
+    function tone(f, t, dur, vol, type) {
+        var o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = type || 'sine'; o.frequency.value = f;
+        g.gain.setValueAtTime(0.0001, ctx.currentTime + t);
+        g.gain.exponentialRampToValueAtTime(vol, ctx.currentTime + t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + t + dur);
+        o.connect(g); g.connect(ctx.destination); o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + dur + 0.05);
+    }
+    function sound() {
+        try {
+            ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+            if (ctx.state === 'suspended') ctx.resume();
+            tone(70, 0, 0.18, 0.5); tone(60, 0.22, 0.2, 0.4);
+            [659, 784, 988, 1319].forEach(function (f, k) { tone(f, 0.55 + k*0.13, 0.5, 0.12, 'triangle'); });
+        } catch (e) {}
+    }
+
+    var SPEECH = [
+        'أهلاً يا كتكوتة…',
+        'أنا ' + ME + '، روبوتك المفضل وحبيبك.',
+        'اليوم عندي إلك مفاجأة…',
+        'كتبتلك رسالة بإيدي… وبتمنى تقرأيها من قلبك.',
+        'بْحِبِّك يا ' + HER + '… وكل يوم أكتر.',
+        'حبيبك: ' + ME + '.'
+    ];
+    function pickVoice() {
+        var vs = speechSynthesis.getVoices();
+        return vs.filter(function (x) { return /^ar[-_]?(PS|JO|LB|SY|EG)/i.test(x.lang); })[0] ||
+               vs.filter(function (x) { return /^ar/i.test(x.lang); })[0] || null;
+    }
+    var scriptBusy = false;
+    function speak() {
+        if (!('speechSynthesis' in window) || scriptBusy) return;
+        scriptBusy = true; speechSynthesis.cancel();
+        var v = pickVoice();
+        setTimeout(function () {
+            SPEECH.forEach(function (line, k) {
+                var u = new SpeechSynthesisUtterance(line);
+                u.lang = (v && v.lang) || 'ar-SA'; u.rate = 1.05; u.pitch = 1.1;
+                if (v) u.voice = v;
+                if (k === SPEECH.length - 1) u.onend = u.onerror = function () { scriptBusy = false; };
+                speechSynthesis.speak(u);
+            });
+        }, 900);
+    }
+    function say(text) {
+        if (!('speechSynthesis' in window)) return;
+        speechSynthesis.cancel();
+        var u = new SpeechSynthesisUtterance(text), v = pickVoice();
+        u.lang = (v && v.lang) || 'ar-SA'; u.rate = 1.05; u.pitch = 1.1; if (v) u.voice = v;
+        speechSynthesis.speak(u);
+    }
+    if ('speechSynthesis' in window) speechSynthesis.onvoiceschanged = function () {};
+
+    function hearts(n) {
+        var set = ['❤', '💖', '💗', '💕', '♥'];
+        for (var k = 0; k < n; k++) (function (k) { setTimeout(function () {
+            var h = document.createElement('span'); h.className = 'fly'; h.textContent = set[Math.floor(Math.random()*set.length)];
+            h.style.cssText = 'left:' + Math.random()*96 + 'vw;font-size:' + (16 + Math.random()*30) + 'px;animation-duration:' + (4 + Math.random()*3.5) + 's;--dx:' + (Math.random()*80-40) + 'px;--rot:' + (Math.random()*60-30) + 'deg';
+            document.body.appendChild(h); setTimeout(function () { h.remove(); }, 8000);
+        }, k * 90); })(k);
+    }
+    function starPath(cx, cy, r) {
+        var d = '';
+        for (var k = 0; k < 10; k++) {
+            var ang = -Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? r * 0.45 : r;
+            d += (k ? 'L' : 'M') + (cx + rr * Math.cos(ang)).toFixed(1) + ' ' + (cy + rr * Math.sin(ang)).toFixed(1);
+        }
+        return d + 'Z';
+    }
+    $('st1').setAttribute('d', starPath(46, -72, 12));
+    $('st2').setAttribute('d', starPath(98, -36, 8));
+    $('st3').setAttribute('d', starPath(262, -34, 9));
+
+    function startDraw() {
+        var pen = $('pen'), wipes = { WIPE: $('wipeRect'), WIPE2: $('wipeRect2') };
+        var ORDER = [['moon',800],['st1',250],['st2',250],['st3',250],['mHead',400],['mHair',300],['mFace',300],['mSuit',450],['mTie',300],['mLegs',350],['wHead',400],['wHair',450],['wFace',300],['wDress',550],['armM',400],['armW',400],['kHrt',650],['WIPE',1700],['swoosh',900],['hrt',850],['bud',850],['stem',550],['lf1',400],['lf2',400],['WIPE2',1500],['inf',900]];
+        var info = {};
+        ORDER.forEach(function (o) {
+            if (wipes[o[0]]) return;
+            var el = $(o[0]), L = el.getTotalLength();
+            info[o[0]] = { el: el, L: L, tx: +(el.getAttribute('data-tx') || 0), ty: +(el.getAttribute('data-ty') || 0), sc: +(el.getAttribute('data-s') || 1), fill: el.getAttribute('data-fill') };
+            el.style.strokeDasharray = L; el.style.strokeDashoffset = L;
+            if (info[o[0]].fill) { el.style.fill = info[o[0]].fill; el.style.fillOpacity = 0; }
+        });
+        function finish(id) {
+            if (wipes[id]) { wipes[id].setAttribute('x', 0); wipes[id].setAttribute('width', 360); return; }
+            var o = info[id]; o.el.style.strokeDashoffset = 0; if (o.fill) o.el.style.fillOpacity = 1;
+        }
+        function done() { ORDER.forEach(function (o) { finish(o[0]); }); pen.style.opacity = 0; }
+        if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) { done(); return; }
+        function ease(x) { return x < .5 ? 2*x*x : 1 - Math.pow(-2*x + 2, 2) / 2; }
+        function setPen(x, y) { pen.setAttribute('transform', 'translate(' + x + ' ' + y + ') rotate(25)'); }
+        var t0 = null; pen.style.opacity = 1;
+        function frame(ts) {
+            if (t0 === null) t0 = ts;
+            var t = ts - t0, acc = 0, cur = -1, p = 0, k;
+            for (k = 0; k < ORDER.length; k++) {
+                if (t < acc + ORDER[k][1]) { cur = k; p = ease((t - acc) / ORDER[k][1]); break; }
+                acc += ORDER[k][1];
+            }
+            if (cur < 0) { done(); return; }
+            for (k = 0; k < cur; k++) finish(ORDER[k][0]);
+            var id = ORDER[cur][0];
+            if (wipes[id]) {
+                var edge = 360 - 360 * p; wipes[id].setAttribute('x', edge); wipes[id].setAttribute('width', 360 - edge);
+                setPen(edge, (id === 'WIPE' ? 110 : 304) + 14 * Math.sin(t / 55));
+            } else {
+                var o = info[id], pt = o.el.getPointAtLength(o.L * p);
+                o.el.style.strokeDashoffset = o.L * (1 - p);
+                if (o.fill) o.el.style.fillOpacity = p > .75 ? (p - .75) * 4 : 0;
+                setPen(o.tx + pt.x * o.sc, o.ty + pt.y * o.sc);
+            }
+            requestAnimationFrame(frame);
+        }
+        requestAnimationFrame(frame);
+    }
+
+    var dotsEl = $('dots');
+    CARDS.forEach(function () { dotsEl.appendChild(document.createElement('i')); });
+    var cardTimer, i = 0;
+    function next() {
+        var idx = i++ % CARDS.length, c = CARDS[idx], card = $('card');
+        card.classList.add('swap');
+        setTimeout(function () {
+            $('sc').innerHTML = c[0]; $('cap').textContent = c[1];
+            for (var k = 0; k < dotsEl.children.length; k++) dotsEl.children[k].className = k === idx ? 'on' : '';
+            card.classList.remove('swap');
+        }, 300);
+        clearInterval(cardTimer); cardTimer = setInterval(next, 6500);
+    }
+
+    /* ===== صندوق الرسالة ===== */
+    var msgCard = $('msgCard');
+    msgCard.addEventListener('click', function () {
+        var isOpen = msgCard.classList.toggle('open');
+        if (isOpen) {
+            hearts(12);
+            try {
+                ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+                tone(659, 0, 0.15, 0.25, 'triangle');
+                tone(988, 0.14, 0.22, 0.25, 'triangle');
+            } catch (e) {}
+        }
+    });
+
+    var state = 'idle', qi = 0, busy = false;
+    var QUIZ = [
+        { q: 'بتحبي ' + ME + '؟', yes: 'أكيد، كتير', no: 'لا' },
+        { q: 'مين حبيبك المفضل؟', yes: ME, no: 'حدا ثاني' },
+        { q: 'بتشتاقي لـ' + ME + '؟', yes: 'كتير كتير', no: 'مش كتير' }
+    ];
+    var REACT = ['عرفت… نظامي فرحان.', 'طبعاً، أنا الوحيد.', 'يا قلبي… هلأ بدي أقولك شي.'];
+    function setQ() {
+        var q = QUIZ[qi]; document.body.classList.remove('sad'); state = 'quiz'; busy = false;
+        $('qText').textContent = q.q; $('qYes').textContent = q.yes; $('qNo').textContent = q.no;
+        $('qYes').hidden = $('qNo').hidden = false; $('qRetry').hidden = true; $('qSub').textContent = '';
+    }
+    function celebrate() {
+        state = 'done'; sound(); hearts(30);
+        if (navigator.vibrate) navigator.vibrate([60, 80, 60]);
+        document.body.classList.remove('asking'); document.body.classList.add('opened');
+        next(); startDraw(); speak();
+        setTimeout(function () { var d = $('draw'); if (d && d.scrollIntoView) d.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 700);
+    }
+    var robot = $('robot');
+    robot.addEventListener('click', function () {
+        robot.classList.remove('pop'); void robot.offsetWidth; robot.classList.add('pop');
+        if (state === 'idle') { document.body.classList.add('asking'); $('quiz').hidden = false; setQ(); return; }
+        if (state !== 'done') return;
+        sound(); hearts(14); speak();
+    });
+    $('qYes').addEventListener('click', function () {
+        if (state !== 'quiz' || busy) return; busy = true; hearts(6);
+        $('qText').textContent = REACT[qi]; $('qYes').hidden = $('qNo').hidden = true;
+        setTimeout(function () {
+            qi++;
+            if (qi < QUIZ.length) setQ(); else { $('quiz').hidden = true; celebrate(); }
+        }, 1700);
+    });
+    $('qNo').addEventListener('click', function () {
+        if (state !== 'quiz' || busy) return; state = 'sad';
+        document.body.classList.add('sad');
+        var line = 'خلص، ' + ME + ' زعلان منك يا كتكوتة.';
+        $('qText').textContent = line + ' 😢'; $('qSub').textContent = 'حتى الشاشة صارت تمطر…'; say(line);
+        $('qYes').hidden = $('qNo').hidden = true; $('qRetry').hidden = false;
+    });
+    $('qRetry').addEventListener('click', function () { setQ(); hearts(8); });
+    $('again').addEventListener('click', function () { next(); hearts(10); });
+})();
+</script>
+</body>
+</html>
